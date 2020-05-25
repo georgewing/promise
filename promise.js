@@ -144,11 +144,31 @@ class Promise {
     }
     //finally 是无论如何都会执行的意思
     //如果返回一个promise，会等待这个promise也执行完毕
-    static finally(callback) {
-        return this.then((value) => {
-            return Promise.resolve(callback()).then(() => value)
-        }, (reason) => {
-            return Promise.resolve(callback()).then(() => {throw reason})
+    finally(callback) {
+        return this.then(
+            x => Promise.resolve(callback()).then(() => x),
+            e => Promise.reject(callback()).then(() => {throw e})
+        )
+    }
+
+    all(promises) {
+        let resolvedCount = 0;
+        let promisesLen = promises.length;
+        let results = new Array(promisesLen);
+        return new Promise((resolve, reject) => {
+            for (let i = 0; i < promisesLen; i++) {
+                (function(i) {
+                    Promise.resolve(val).then(value => {
+                        resolvedCount++;
+                        results[i] = value;
+                        // 当所有函数都正确执行了，resolve输出所有返回结果
+                        if (resolvedCount === promisesLen) {
+                            return resolve(results);
+                        }
+                    }, reason => reject(reason))
+                })(i)
+            }
+            resolve(results);
         })
     }
 }
